@@ -1,0 +1,32 @@
+import pandas as pd
+import numpy as np
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression, Ridge, RidgeCV, Lasso, LassoCV
+import math as ma
+
+df = pd.read_csv("sgn.csv")
+X = df["x"]
+y = df["y"]
+
+m = 1000
+a = np.column_stack([X.apply(lambda x: ma.cos(x*i)) for i in range(m)]) # lambda - анонимная функция, возвращает результат
+b = np.column_stack([X.apply(lambda x: ma.sin(x*i)) for i in range(m)])
+w = np.hstack([a, b]) #соединили массивы по горизонтали
+  
+model = LassoCV()
+model.fit(w, y)
+print("коэффициент при х", model.coef_)
+print('свободный член', model.intercept_)
+
+sns.scatterplot(x=X, y=y)
+y_pred = model.predict(w)
+sns.lineplot(x=X, y=y_pred)
+plt.tight_layout()
+plt.savefig("18.3график.pdf")
+
+коэффициент при х [0. 0. 0. ... 0. 0. 0.]
+свободный член -0.004452634115688679
