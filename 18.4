@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+
+from sklearn.svm import SVC
+from sklearn.metrics import balanced_accuracy_score
+from sklearn.model_selection import train_test_split
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression, Ridge, RidgeCV, Lasso, LassoCV, LogisticRegression
+
+df = pd.read_csv("BRCA_pam50.tsv", sep="\t", index_col=0)
+# Для 50 генов
+X = df.iloc[:, :-1].to_numpy()
+y = df["Subtype"].to_numpy()
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=17)
+model = SVC(kernel="linear")
+model.fit(X_train, y_train) 
+y_pred = model.predict(X_test) 
+print('Сбалансированная точность классификации для 50 генов=', balanced_accuracy_score(y_test, y_pred))
+
+# Для первых 2 главных компонент
+
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+# Стандартизация данных
+X = df.iloc[:, :-1].values
+y = df.loc[:,["Subtype"]].values
+X = StandardScaler().fit_transform(X)
+
+pca = PCA(n_components=2)
+principalComponents = pca.fit_transform(X)
+
+principalDf = pd.DataFrame(data = principalComponents , columns = ['principal component 1',
+                                                                   'principal component 2'])
+principalDf['Subtype'] = y # К созданному датафрейму со значениями добавили столбец субтипы и заполнили значениями
+# Обучили линейный SVM для 2х компонент
+X = principalDf.iloc[:, :-1].to_numpy()
+y = principalDf["Subtype"].to_numpy()
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=17)
+model = SVC(kernel="linear")
+model.fit(X_train, y_train) 
+y_pred = model.predict(X_test) 
+print('Сбалансированная точность классификации для 2х компонент=', balanced_accuracy_score(y_test, y_pred))
+
+#Для логистической регрессии
+X = df.iloc[:, :-1].to_numpy()
+y = df["Subtype"].to_numpy()
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=17)
+model = LogisticRegression(class_weight="balanced", C=0.01, penalty="l1",solver="liblinear")
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test) 
+print('Сбалансированная точность классификации логистической регрессии=', balanced_accuracy_score(y_test, y_pred))
+print("коэффициент при х", model.coef_)
+
+Сбалансированная точность классификации для 50 генов= 0.7822173561277613
+Сбалансированная точность классификации для 2х компонент= 0.6371572041649078
+Сбалансированная точность классификации логистической регрессии= 0.6994865666823927
